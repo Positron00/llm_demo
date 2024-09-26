@@ -1,1 +1,1 @@
-This is a demo repo for using open source large language models (llm).
+This is a sandbox repo for trying open source large language models (llm).
