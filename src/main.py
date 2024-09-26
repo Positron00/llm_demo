@@ -15,6 +15,7 @@ args = parser.parse_args()
 # download models and datasets
 def cache():
     models = [
+        {'name': 'gpt2-med', 'type':  transformers.AutoModelForCausalLM},
         {'name': 'Llama-3.1-8B', 'class': transformers.AutoModelForCausalLM},
         {'name': 'Llama-3.2-11B-V-Inst', 'class': transformers.MllamaForConditionalGeneration}
     ]
