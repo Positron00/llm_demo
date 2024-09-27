@@ -137,8 +137,10 @@ def ft_llm(model, tokenizer, x, y, mode, debug, batch_size=8):
                 break
     return model
 
+
 def run_ft(models: List[str], datasets: List[str], ks: List[int], modes: List[str], debug: bool, repeats: int, n_val: int = 125):
     results = {}
+
     for dataset in datasets:
         utils.fix_random_seeds()
 
@@ -148,21 +150,67 @@ def run_ft(models: List[str], datasets: List[str], ks: List[int], modes: List[st
 
         for model_name, mode in itertools.product(models, modes):
             utils.fix_random_seeds()
-            model, tokenizer = utils.get_model_and_tokenizer(model_name, transformers.AutoModelForCausalLM)
+            
+            if dataset == 'amazon':
+                model, tokenizer = utils.get_model_and_tokenizer(model_name, transformers.AutoModelForSequenceClassification, num_labels=5)
+            else:
+                model, tokenizer = utils.get_model_and_tokenizer(model_name, transformers.AutoModelForCausalLM)
+
+            stop_tokens = utils.stop_tokens(tokenizer)
 
             for k in ks:
                 print(f'Fine-tuning {model_name} on {dataset} with k={k} and mode={mode}')
+
                 utils.fix_random_seeds()
 
                 for repeat in range(repeats):
+                    result_key = '_'.join([model_name, dataset, str(k), mode])
+
                     if repeat > 0:
                         print(f'Beginning repeat #{repeat}')
+                    if dataset == 'amazon':
+                        fine_tuned = ft_llm(model, tokenizer, train['x'][:k*5], train['y'][:k*5], mode, debug)
+                        val_acc = eval(fine_tuned, tokenizer, val)
 
-                    fine_tuned = ft_llm(model, tokenizer, train['x'][:k], train['simple_y'][:k], mode, dataset)
+                        if val_acc >= results.get(result_key, 0):
+                            results[result_key] = val_acc
+                    else:
+                        if k > 0:
+                            fine_tuned = ft_llm(model, tokenizer, train['x'][:k], train['simple_y'][:k], mode, dataset)
+                        else:
+                            fine_tuned = copy.deepcopy(model)
+                            fine_tuned.to(DEVICE)
 
-                    fine_tuned.eval()
-                  
+                        fine_tuned.eval()
+                        targets = []
+                        predictions = []
+                        pbar = tqdm.tqdm(list(range(min(n_val, len(val['x'])))))
+
+                        for row in pbar:
+                            test_input = val['x'][row]
+                            targets.append(val['y'][row])
+                            max_tokens = utils.max_sampled_tokens_for_dataset(dataset)
+                            prompt_mode = 'qa' if utils.is_qa_dataset(dataset) else 'tldr'
+                            prompt = get_prompts([], [], test_input, prompt_mode=prompt_mode)
+                            input_ids = tokenizer(prompt, return_tensors='pt').input_ids.to(DEVICE)
+                            sampled_tokens = do_sample(fine_tuned, input_ids, stop_tokens, max_tokens)
+                            decoded = tokenizer.decode(sampled_tokens).strip()
+                            predictions.append(decoded)
+                            metric = get_performance_metric(predictions, targets, utils.metric_for_dataset(dataset))
+                            pbar.set_description(f'Eval: {metric:.04f}')
+
+                        if metric >= results.get(result_key, 0):
+                            results[result_key] = metric
+                        results['_'.join([model_name, dataset, str(k), mode])] = metric
+
                     print(results)
+                    question = 'ft'
+                    if not os.path.exists(f'results/{question}'):
+                        os.makedirs(f'results/{question}')
+
+                    for k_, v in results.items():
+                        with open(f'results/{question}/{k_}.json', 'w') as f:
+                            json.dump({'metric': v}, f)
                     results = {}
 
 
