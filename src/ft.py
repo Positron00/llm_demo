@@ -10,6 +10,10 @@ import utils
 import copy
 import numpy as np
 import os
+import json
+from collections import defaultdict
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import itertools
 import tqdm
 
@@ -161,3 +165,33 @@ def run_ft(models: List[str], datasets: List[str], ks: List[int], modes: List[st
                     print(results)
                     results = {}
 
+
+def plot_ft(models, datasets, ks, modes, output):
+    data = defaultdict(lambda: defaultdict(list))
+    question = 'ft'
+
+    x_vals = set()
+    for dataset in datasets:
+        for model, mode in itertools.product(models, modes):
+            for k in ks:
+                fn = '_'.join([model, dataset, str(k), mode])
+                id_ = '_'.join([model, dataset, mode])
+                with open(f'results/{question}/{fn}.json', 'r') as f:
+                    score = json.load(f)['metric']
+                    data[id_]['x'].append(k)
+                    x_vals.add(k)
+                    data[id_]['y'].append(score)
+
+        for k, v in data.items():
+            plt.plot(v['x'], v['y'], label=k)
+
+    if max(x_vals) > 4:
+        plt.xscale('symlog')
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(mticker.ScalarFormatter())
+    ax.xaxis.set_ticks(sorted(x_vals))
+    plt.legend()
+    plt.title(' & '.join(datasets))
+    plt.ylabel('/'.join([utils.metric_for_dataset(dataset) for dataset in datasets]))
+    plt.xlabel('Number of support examples')
+    plt.savefig(output, bbox_inches='tight')
