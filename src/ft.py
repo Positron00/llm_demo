@@ -1,11 +1,137 @@
 from typing import List
 
-import transformers
-import utils
-import itertools
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
-def ft_llm():
-    pass
+import transformers
+
+import utils
+import copy
+import numpy as np
+import os
+import itertools
+import tqdm
+
+# determine device to train on
+DEVICE = os.environ["DEVICE"] if "DEVICE" in os.environ else "cpu"
+
+if DEVICE == "gpu" and torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    DEVICE = torch.device("mps")
+elif DEVICE == "gpu" and torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+else:
+    DEVICE = torch.device("cpu")
+
+print("Fine-tuning using device: ", DEVICE)
+
+
+def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
+    """
+    Select the parameters in `model` that should be fine-tuned in mode `mode`.
+
+    Args:
+      model: the model we're fine-tuning
+      mode: the fine-tuning mode we're using; may be 'all', 'last', 'first',
+        'middle'
+    
+    Returns:
+      A list of nn.Parameters of `model` that should be fine-tuned in the given
+        fine-tuning mode.
+    """
+
+    if mode == 'all':
+        return model.parameters()
+    elif mode == 'last':
+        for param in model.parameters():
+            param.requires_grad = False
+
+        for param in model.transformer.h[-2:].parameters():
+            param.requires_grad = True
+
+        return filter(lambda p: p.requires_grad, model.parameters())
+        
+    elif mode == 'first':
+        for param in model.parameters():
+            param.requires_grad = False
+
+        for param in model.transformer.h[:2].parameters():
+            param.requires_grad = True
+
+        return filter(lambda p: p.requires_grad, model.parameters())
+    elif mode == 'middle':
+        for param in model.parameters():
+            param.requires_grad = False
+
+        transformer_blocks = model.transformer.h
+        mid_index = len(transformer_blocks) // 2
+        parameters = list(transformer_blocks[mid_index - 1].parameters()) + list(transformer_blocks[mid_index].parameters())
+
+        return parameters
+    
+    else:
+        raise NotImplementedError()
+
+
+def get_loss(logits: torch.tensor, targets: torch.tensor) -> torch.tensor:
+    """
+    Computes the cross-entropy loss.
+
+    Args:
+      logits: a 2D [batch_size, n_classes] (for classification) 
+      targets: a 1D [batch_size] (for classification) tensor of target indices. 
+
+    Returns:
+      A zero-dim tensor representing the average cross-entropy loss over all batch 
+        elements (and sequence timesteps, if applicable)
+    """
+
+    return F.cross_entropy(logits, targets).mean()
+
+def get_acc(logits, targets):
+    """
+    Computes the exact match accuracy 
+
+    Args:
+      logits: a 2D [batch_size, n_classes] (for classification) tensor of logits
+      targets: a 1D [batch_size] (for classification) tensor of target indices. 
+    
+    Returns:
+      A *scalar* representing the average exact-match accuracy over all non-masked batch 
+        elements
+    """
+
+    y = torch.argmax(logits, dim=-1) == targets
+    y = y.type(torch.float)
+    return torch.mean(y).item()
+    
+
+def ft_llm(model, tokenizer, x, y, mode, debug, batch_size=8):
+    model = copy.deepcopy(model)
+
+    optimizer = torch.optim.Adam(parameters_to_fine_tune(model, mode), lr=1e-4)
+    all_x = tokenizer(x, return_tensors='pt', padding=True, truncation=True, max_length=100).to(DEVICE)
+    all_y = torch.tensor(y, device=DEVICE)
+    pbar = tqdm.tqdm(range(1000))
+    for step in pbar:
+        batch = np.random.randint(0, len(x), batch_size)
+        x_ = tokenizer([x[i] for i in batch], return_tensors='pt', padding=True, truncation=True, max_length=100).to(DEVICE)
+        y_ = torch.tensor([y[i] for i in batch], device=DEVICE)
+        logits = model(**x_).logits
+        loss = get_loss(logits, y_)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        if debug:
+            break
+
+        if step % 10 == 0:
+            with torch.inference_mode():
+                total_acc = get_acc(model(**all_x).logits, all_y)
+            pbar.set_description(f'Fine-tuning acc: {total_acc:.04f}')
+            if total_acc > 0.75:
+                break
+    return model
 
 def run_ft(models: List[str], datasets: List[str], ks: List[int], modes: List[str], debug: bool, repeats: int, n_val: int = 125):
     results = {}
