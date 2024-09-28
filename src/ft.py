@@ -30,6 +30,25 @@ else:
 print("Fine-tuning using device: ", DEVICE)
 
 
+class LoRAConv1DWrapper(nn.Module):
+    def __init__(self, conv1dmodule: nn.Module, lora_rank: int):
+        super().__init__()
+
+        self.base_module = conv1dmodule
+             
+        for param in self.base_module.parameters():
+            param.requires_grad = False
+
+        self.lora_A = nn.Parameter(torch.empty(self.base_module.weight.shape[0], lora_rank))
+        nn.init.kaiming_uniform_(self.lora_A)
+        self.lora_B = nn.Parameter(torch.zeros(self.base_module.weight.shape[1], lora_rank))
+
+    def forward(self, x):
+        base_output = self.base_module(x)
+        lora_output = (torch.matmul(torch.matmul(x,self.lora_A),self.lora_B.T))
+        return base_output + lora_output
+
+
 def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
     """
     Select the parameters in `model` that should be fine-tuned in mode `mode`.
@@ -72,6 +91,18 @@ def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
         parameters = list(transformer_blocks[mid_index - 1].parameters()) + list(transformer_blocks[mid_index].parameters())
 
         return parameters
+    
+    elif mode.startswith('lora'):
+        for param in model.parameters():
+            param.requires_grad = False
+
+        for m in model.modules():
+            if isinstance(m, LoRAConv1DWrapper):
+                for name, param in m.named_parameters():
+                    if 'lora_A' in name or 'lora_B' in name:
+                        param.requires_grad = True
+
+        return filter(lambda p: p.requires_grad, model.parameters())
     
     else:
         raise NotImplementedError()
