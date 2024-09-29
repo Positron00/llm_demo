@@ -1,12 +1,11 @@
+import os
+import numpy as np
+import random
 from collections import defaultdict
 import datasets
 import transformers
 import logging
-import random
 import torch
-import numpy as np
-import os
-
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ def model2hfname(modelID: str) -> str:
         'Llama-3.2-11B-V-Inst': 'meta-llama/Llama-3.2-11B-Vision-Instruct'
     }[modelID]
 
+
 def dataset2hfname(datasetID: str) -> str:
     return {
         'mnli': ('multi_nli',),
@@ -36,6 +36,7 @@ def dataset2hfname(datasetID: str) -> str:
         'xsum': ('xsum',),
         'babi': ('babi_qa', 'en-valid-10k-qa1')
     }[datasetID]
+
 
 def get_dataset(datasetID: str, n_train: int, n_val: int = 100):
     if datasetID == 'cnn':
@@ -56,7 +57,7 @@ def get_dataset(datasetID: str, n_train: int, n_val: int = 100):
         d = d.map(strip_target)
         d = d.add_column('simple_y', d['y'])
         return d[:n_train], d[n_train:n_train + n_val]
-
+    
     elif datasetID == 'trivia':
         n_train = 256
         d = datasets.load_dataset('trivia_qa', 'rc.nocontext', split='train[:1%]')
@@ -66,7 +67,7 @@ def get_dataset(datasetID: str, n_train: int, n_val: int = 100):
         d = d.rename_column('question', 'x')
         offset = 0
         return d[offset:offset+n_train], d[offset+n_train:offset+n_train + n_val]
-
+    
     elif datasetID == 'babi':
         n_train = 256
         d = datasets.load_dataset('babi_qa', 'en-valid-10k-qa1', split='train')
@@ -86,7 +87,7 @@ def get_dataset(datasetID: str, n_train: int, n_val: int = 100):
         data = {'x': stories, 'y': answers, 'simple_y': answers}
         d = datasets.Dataset.from_dict(data)
         return d[:n_train], d[n_train:n_train + n_val]
-
+    
     elif datasetID == 'amazon':
         data_files = "data/amazon_reviews_us_Video_v1_00.csv"
         try:
@@ -114,7 +115,7 @@ def get_dataset(datasetID: str, n_train: int, n_val: int = 100):
                 val['y'][(c - n_train) * 5 + y[idx]] = y[idx]
                 counts[y[idx]] += 1
         return train, val
-
+    
     elif datasetID == 'xsum':
         n_train = 256
         d = datasets.load_dataset('xsum', split='train')
@@ -123,7 +124,7 @@ def get_dataset(datasetID: str, n_train: int, n_val: int = 100):
         d = d.rename_columns({'document': 'x', 'summary': 'y'})
         d = d.add_column('simple_y', d['y'])
         return d[:n_train], d[n_train:n_train + n_val]
-        
+    
     else:
         raise NotImplementedError(f'{datasetID}')
 
@@ -140,13 +141,13 @@ def stop_tokens(tokenizer, stop_string: str = '.') -> int:
     return tokens
 
 
-def max_sampled_tokens_for_dataset(dataset: str) -> int:
+def max_sampled_tokens_for_dataset(datasetID: str) -> int:
     return {
         'cnn': 30,
         'trivia': 12,
         'babi': 6,
         'xsum': 30,
-    }[dataset]
+    }[datasetID]
 
 
 def get_model_and_tokenizer(modelID: str, modelClass, **model_kwargs):
