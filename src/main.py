@@ -1,5 +1,8 @@
-import argparse
 import os
+import argparse
+import torch
+import transformers
+import importlib.util
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import json
@@ -7,7 +10,8 @@ from collections import defaultdict
 
 import utils
 import ft
-import transformers
+import icl
+
 
 # parse the input argument
 parser = argparse.ArgumentParser()
@@ -25,16 +29,22 @@ args = parser.parse_args()
 
 os.environ["DEVICE"] = args.device
 
-# download models and datasets
+
+# get models and datasets
 def cache():
     models = [
-        {'name': 'gpt2-med', 'type':  transformers.AutoModelForCausalLM},
+        {'name': 'bert-tiny', 'class':  transformers.AutoModelForSequenceClassification, 'num_labels': 5},
+        {'name': 'bert-tiny', 'class':  transformers.AutoModelForCausalLM},
+        {'name': 'gpt2-med', 'class':  transformers.AutoModelForCausalLM},
         {'name': 'Llama-3.1-8B', 'class': transformers.AutoModelForCausalLM},
         {'name': 'Llama-3.2-11B-V-Inst', 'class': transformers.MllamaForConditionalGeneration}
     ]
     
     for model in models:
-        utils.get_model_and_tokenizer(model['name'], model['class'])
+        if 'num_labels' in model:
+            utils.get_model_and_tokenizer(model['name'], model['class'], num_labels = model['num_labels'])
+        else:
+            utils.get_model_and_tokenizer(model['name'], model['class'])
 
     datasets = [
         {'name': 'amazon', 'n_train': 1, 'n_val': 125},
@@ -44,12 +54,14 @@ def cache():
     for dataset in datasets:
         utils.get_dataset(dataset=dataset['name'], n_train=dataset['n_train'], n_val=dataset['n_val'])
 
+
 def plot():
     dataset = 'xsum'
     data = defaultdict(lambda: defaultdict(list))
     model = 'gpt2-med'
-    mode = 'last'
+    mode = 'lora16'
     x_vals = set()
+
     for k in [0,1,8,128]:
         fn = '_'.join([model, dataset, str(k), mode])
         id_ = '_'.join([model, dataset, mode])
@@ -71,6 +83,7 @@ def plot():
 
     for k, v in data.items():
         plt.plot(v['x'], v['y'], label=k)
+
     if max(x_vals) > 4:
         plt.xscale('symlog')
     
@@ -83,20 +96,30 @@ def plot():
     plt.xlabel('Number of support examples')
     plt.savefig(args.output, bbox_inches='tight')
 
+
 # run a task
 def run():
     ks = [int(k) for k in args.k.split(',')]
+
     if args.task == 'run_ft':
         ft.run_ft(args.model.split(','), args.dataset.split(','), ks, args.mode.split(','), args.debug, args.repeats)
-    
+
+    elif args.task == 'run_icl':
+        icl.run_icl(args.model.split(','), args.dataset.split(','), ks, args.prompt.split(','), args.debug, args.repeats)
+
     elif args.task == 'plot_ft':
         ft.plot_ft(args.model.split(','), args.dataset.split(','), ks, args.mode.split(','), args.output)
-    
+
+    elif args.task == 'plot_icl':
+        assert ',' not in args.dataset, "Only one dataset at a time for plotting"
+        icl.plot_icl(args.model.split(','), args.dataset, ks, args.prompt.split(','), args.output)
+
     elif args.task == 'plot':
         plot()
 
     elif args.task == 'cache':
         cache()
 
+
 if __name__ == '__main__':
-    run()
+    run()    
