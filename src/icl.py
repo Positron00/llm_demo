@@ -1,17 +1,13 @@
-from cProfile import label
-from multiprocessing.sharedctypes import Value
-from typing import Dict, List, Optional, Tuple
+import os
+import random
+from collections import defaultdict
+import numpy as np
+import json
+from typing import List
 import torch
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import transformers
-import numpy as np
-import random
-
-import argparse
-from collections import defaultdict
-import json
-import os
 from rouge_score import rouge_scorer
 import tqdm
 
@@ -36,28 +32,45 @@ def get_icl_prompts(
     prompt_mode: str = 'qa') -> str:
     """
     Take a list of contexts and combine them into k-shot prompts.
+
+    Args:
+      support_inputs: The k inputs used for in-context learning (k may be zero)
+      support_labels: The k labels used for in-context learning (k may be zero)
+      test_input: The input we are evaluating on
+      prompt_mode: 
+        'none': only using k-shot examples;
+        'tldr': using the TL;DR: prompt from the GPT-2 paper;
+        'qa': adding "In the" after the question and before the answer;
+        'custom': custom prompt format for article summarization. 
+        
+    Returns:
+      A string containing the complete input to the model.
     """
     
     prompt = ''
 
     k = len(support_labels) # check how many support
     kOrder = np.random.permutation(k)
+
     # build the prompt
     if prompt_mode == 'qa':
         if k > 0:
             for i in kOrder:
                 prompt = prompt + support_inputs[i] + ' In the ' + support_labels[i] + '. '
         prompt = prompt + test_input + ' In the' 
+
     elif prompt_mode == 'none':
         if k > 0:
             for i in kOrder:
                 prompt = prompt + support_inputs[i] + ' ' + support_labels[i] + ' '
         prompt = prompt + test_input
+
     elif prompt_mode == 'tldr':
         if k > 0:
             for i in kOrder:
                 prompt = prompt + support_inputs[i] + ' TL;DR: ' + support_labels[i] + '. '
         prompt = prompt + test_input + ' TL;DR:'
+
     elif prompt_mode == 'custom':
         if k > 0:
             for i in kOrder:
@@ -68,6 +81,9 @@ def get_icl_prompts(
 
 
 def get_performance_metric(predictions: List[str], targets: List[str], metric: str) -> float:
+    """
+    Calculate performance metric based on either rouge score or exact match.
+    """
     if metric == 'rouge':
         scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=True)
         scores = []
@@ -100,8 +116,18 @@ def get_performance_metric(predictions: List[str], targets: List[str], metric: s
 
 def do_sample(model, input_ids, stop_tokens, max_tokens):
     """
-    Sample from the model using the given input_ids as a prefix until we either
-    hit the stop token or we have sampled max_tokens tokens.
+    Sample from the model using the given input_ids as a prefix until either
+    hitting the stop token or having sampled max_tokens tokens.
+
+    Args:
+        model: A transformers.PreTrainedModel to sample from
+        input_ids: An integer tensor of shape [1, prefix_len]
+        stop_tokens: A list of token ids for stopping sampling (e.g., a period)
+        max_tokens: Stop sampling if already sampled this many tokens
+    
+    Returns:
+        The sampled tokens (a python list of ints/zero-dim tensors), not including the input_ids prefix
+          OR the stop token (if hitting the stop token before max_tokens)
     """
 
     sampled_tokens = []
@@ -143,6 +169,7 @@ def run_icl(models: List[str], datasets_: List[str], ks: List[int], prompt_modes
             
             max_tokens = utils.max_sampled_tokens_for_dataset(dataset)
             train, val = utils.get_dataset(dataset, n_train=max(ks), n_val=n_val)
+
             for prompt_mode in prompt_modes:
                 for k in ks:
                     print(f'Running in-context learning with {model_name} on {dataset} with k={k} and prompt_mode={prompt_mode}')
@@ -161,7 +188,7 @@ def run_icl(models: List[str], datasets_: List[str], ks: List[int], prompt_modes
                         for row in pbar:
                             test_input = val['x'][row]
                             targets.append(val['y'][row])
-
+                            decoded_prediction = ''
                             prompt = get_icl_prompts(support_x,support_y,test_input,prompt_mode)
                             input_ids = tokenizer(prompt,return_tensors='pt').input_ids.to(DEVICE)
                             sampled_tokens = do_sample(model, input_ids, stop_tokens, max_tokens)
