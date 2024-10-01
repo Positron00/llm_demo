@@ -363,8 +363,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     return model
 
 
-def eval(model, tok, val_data):
-    x = tok(val_data['x'], return_tensors='pt', padding=True, truncation=True, max_length=100).to(DEVICE)
+def eval(model, tokenizer, val_data):
+    x = tokenizer(val_data['x'], return_tensors='pt', padding=True, truncation=True, max_length=100).to(DEVICE)
     y = torch.tensor(val_data['y'], device=DEVICE)
     with torch.inference_mode():
         logits = model(**x).logits
