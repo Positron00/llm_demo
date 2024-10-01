@@ -234,7 +234,7 @@ def ft_bert(model, tokenizer, x, y, mode, debug, batch_size=8):
         if step % 10 == 0:
             with torch.inference_mode():
                 total_acc = get_acc(model(**all_x).logits, all_y)
-            pbar.set_description(f'Fine-tuning acc: {total_acc:.04f}')
+            pbar.set_description(f'Fine-tuning training accuracy: {total_acc:.04f}')
             if total_acc > 0.75:
                 break
 
@@ -438,7 +438,7 @@ def run_ft(models: List[str], datasets: List[str], ks: List[int], modes: List[st
                             results[result_key] = metric
                         results['_'.join([model_name, dataset, str(k), mode])] = metric
 
-                    print(results)
+                    print('validation accuracy: ' + results)
                     question = 'ft'
                     if not os.path.exists(f'results/{question}'):
                         os.makedirs(f'results/{question}')
