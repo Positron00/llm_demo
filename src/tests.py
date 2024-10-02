@@ -14,7 +14,7 @@ class Test_ft_params(unittest.TestCase):
         # Cache the datasets and models needed
         utils.get_model_and_tokenizer('bert-tiny', transformers.AutoModelForCausalLM)
         utils.get_model_and_tokenizer('bert-tiny', transformers.AutoModelForSequenceClassification, num_labels=5)
-        utils.get_dataset(dataset='amazon', n_train=1, n_val=125)
+        utils.get_dataset(datasetID='amazon', n_train=1, n_val=125)
 
     def test(self):
         """Basic test case for testing the number of parameters to fine tune in mode 'all'."""
