@@ -36,7 +36,7 @@ def get_icl_prompts(
     Args:
       support_inputs: The k inputs used for in-context learning (k may be zero)
       support_labels: The k labels used for in-context learning (k may be zero)
-      test_input: The input we are evaluating on
+      test_input: The input to be evaluated on
       prompt_mode: 
         'none': only using k-shot examples;
         'tldr': using the TL;DR: prompt from the GPT-2 paper;
@@ -49,8 +49,8 @@ def get_icl_prompts(
     
     prompt = ''
 
-    k = len(support_labels) # check how many support
-    kOrder = np.random.permutation(k)
+    k = len(support_labels) # check how many support examples
+    kOrder = np.random.permutation(k) # shuffle the ordering
 
     # build the prompt
     if prompt_mode == 'qa':
