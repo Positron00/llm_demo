@@ -8,11 +8,6 @@ import matplotlib.ticker as mticker
 import json
 from collections import defaultdict
 
-import utils
-import ft
-import icl
-
-
 # parse the input argument
 parser = argparse.ArgumentParser()
 parser.add_argument('--task')
@@ -29,6 +24,9 @@ args = parser.parse_args()
 
 os.environ["DEVICE"] = args.device
 
+import utils
+import ft
+import icl
 
 # get models and datasets
 def cache():
