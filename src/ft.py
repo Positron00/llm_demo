@@ -46,10 +46,12 @@ class LoRAConv1DWrapper(nn.Module):
         self.lora_A = nn.Parameter(torch.empty(self.base_module.weight.shape[0], lora_rank))
         nn.init.kaiming_uniform_(self.lora_A)
         self.lora_B = nn.Parameter(torch.zeros(self.base_module.weight.shape[1], lora_rank))
+        self.lora_A.requires_grad = True
+        self.lora_B.requires_grad = True
 
     def forward(self, x):
         base_output = self.base_module(x)
-        lora_output = (torch.matmul(torch.matmul(x,self.lora_A),self.lora_B.T))
+        lora_output = torch.matmul(torch.matmul(x,self.lora_A),self.lora_B.T)
         return base_output + lora_output
 
 
