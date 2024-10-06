@@ -101,6 +101,9 @@ def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
         
         parameters = list(transformer_blocks[mid_index - 1].parameters()) + list(transformer_blocks[mid_index].parameters())
 
+        for param in parameters:
+            param.requires_grad = True
+
         return parameters
 
     elif mode.startswith('lora'):
