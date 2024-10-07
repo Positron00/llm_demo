@@ -443,7 +443,7 @@ def run_ft(models: List[str], datasets: List[str], ks: List[int], modes: List[st
                             results[result_key] = metric
                         results['_'.join([model_name, dataset, str(k), mode])] = metric
 
-                    print('validation accuracy: ' + results)
+                    print(results)
                     question = 'ft'
                     if not os.path.exists(f'results/{question}'):
                         os.makedirs(f'results/{question}')
