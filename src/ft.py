@@ -106,6 +106,10 @@ def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
         for param in parameters:
             param.requires_grad = True
 
+        # Verification
+        print(f"Number of parameters with gradients enabled: {sum(p.requires_grad for p in parameters)}")
+        print(f"Total number of parameters: {len(parameters)}")
+
         return parameters
 
     elif mode.startswith('lora'):
