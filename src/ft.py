@@ -176,7 +176,8 @@ def get_acc(logits, targets):
 
     For generation, need to deal with the fact that different sequences within
       the batch have different lengths, and the targets tensor includes some mask
-      values (-100). The average accuracy is the *average accuracy over all non-masked timesteps*.
+      values (-100). The average accuracy is the *average accuracy over all non-masked batch 
+        elements (and sequence timesteps, if applicable)
       Also need to handle the fact that the prediction for what token t will be is
       made after seeing only t - 1 tokens; that is, there is an off-by-one shift needed
       between the logits and targets.
