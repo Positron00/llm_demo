@@ -340,7 +340,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         batch = tokenize_gpt2_batch(tokenizer, x_batch, y_batch)
         model_output = model(**batch, use_cache=False)
         loss = get_loss(model_output.logits, batch['labels'])
-        loss = loss / grad_accum.float()
+        loss = loss / grad_accum
         loss.requires_grad = True
         loss.backward()
 
