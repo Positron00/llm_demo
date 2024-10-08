@@ -317,6 +317,10 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     x, y = add_prefixes(x, y, dataset)
     model = copy.deepcopy(model)
 
+    # Debug print
+    print("Input x requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in x))
+    print("Input y requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in y))
+
     if mode.startswith('lora'):
         for m in model.transformer.h:
             m.mlp.c_fc = LoRAConv1DWrapper(m.mlp.c_fc, int(mode[4:]))
@@ -325,6 +329,9 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
     model.to(DEVICE)
     optimizer = torch.optim.Adam(parameters_to_fine_tune(model, mode), lr=2e-5)
+
+    # Debug print
+    print("Number of parameters with requires_grad=True:", sum(p.requires_grad for p in model.parameters()))
 
     all_both = tokenize_gpt2_batch(tokenizer, x, y)
     max_n = len(x) * 10
@@ -343,16 +350,37 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         y_batch = [y[i] for i in batch_idxs]
 
         batch = tokenize_gpt2_batch(tokenizer, x_batch, y_batch)
+        
+        # Debug print
+        for key, value in batch.items():
+            if isinstance(value, torch.Tensor):
+                print(f"{key} requires_grad:", value.requires_grad)
+
         model_output = model(**batch, use_cache=False)
         loss = get_loss(model_output.logits, batch['labels'])
+        
+        # Debug print
+        print("Loss requires_grad:", loss.requires_grad)
         loss = loss / grad_accum
         print(loss)
         loss.requires_grad = True
         loss.backward()
 
+        # Debug print
+        print("Gradients after backward:")
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(f"{name}: {param.grad is not None}")
+
         if (step + 1) % grad_accum == 0:
             optimizer.step()
             optimizer.zero_grad()
+
+            # Debug print
+            print("Parameter update check:")
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    print(f"{name} updated: {param.grad is not None}")
 
         pbar.set_postfix(loss=loss.item())
 
