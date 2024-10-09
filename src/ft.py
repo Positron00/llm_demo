@@ -413,6 +413,9 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
                 print('Early stopping!')
                 break
 
+        if step == 10:
+            break
+
     return model
 
 
