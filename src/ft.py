@@ -299,6 +299,8 @@ def tokenize_gpt2_batch(tokenizer, x, y):
                 labels[i,j] = targetTokens[j-lenInput]
 
     tokenized_sequences['labels'] = labels
+    print(tokenized_sequences)
+    print(tokenized_sequences['labels'])
     
     return tokenized_sequences.to(DEVICE)
 
