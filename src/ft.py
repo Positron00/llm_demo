@@ -282,7 +282,6 @@ def tokenize_gpt2_batch(tokenizer, x, y):
     tokenized_sequences = tokenizer(combined_sequences,return_tensors="pt",padding=True,truncation=True)
 
     labels = torch.full_like(tokenized_sequences['input_ids'], -100)
-    labels.requires_grad = True
     tokenized_targets = tokenizer(y,return_tensors="pt",padding=True,truncation=True)
     tokenized_inputs = tokenizer(x,return_tensors="pt",padding=True,truncation=True)
 
