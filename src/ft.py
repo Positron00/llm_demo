@@ -365,6 +365,11 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             if isinstance(value, torch.Tensor):
                 print(f"{key} requires_grad:", value.requires_grad)
 
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(f"{name} requires gradient")
+
+
         model_output = model(**batch, use_cache=False)
         loss = get_loss(model_output.logits, batch['labels'])
         
