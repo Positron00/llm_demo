@@ -107,10 +107,10 @@ def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
             param.requires_grad = True
 
         # Verification
-        print(f"Number of parameters with gradients enabled: {sum(p.requires_grad for p in parameters)}")
-        print(f"Total number of parameters: {len(parameters)}")
+        print(f"Number of parameters with gradients enabled: {sum(p.requires_grad for p in model.parameters())}")
+        print(f"Total number of parameters: {len(model.parameters())}")
 
-        return parameters
+        return filter(lambda p: p.requires_grad, model.parameters())
 
     elif mode.startswith('lora'):
         for param in model.parameters():
@@ -372,6 +372,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
                 print(f"{name} requires gradient")
 
 
+        model.train()  # Set the model to training mode
         model_output = model(**batch, use_cache=False)
         loss = get_loss(model_output.logits, batch['labels'])
         loss = loss / grad_accum
