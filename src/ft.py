@@ -373,7 +373,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
 
         model.train()  # Set the model to training mode
-        model_output = model(**batch, use_cache=False)
+        model_output = model(**batch)
         loss = get_loss(model_output.logits, batch['labels'])
         loss = loss / grad_accum
 
