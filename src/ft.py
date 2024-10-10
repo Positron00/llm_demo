@@ -336,10 +336,10 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     optimizer = torch.optim.Adam(parameters_to_fine_tune(model, mode), lr=2e-5)
 
     # Debug print
-    print(f"Parameters with requires_grad=True for mode '{mode}':")
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            print(f"  {name}")
+    #print(f"Parameters with requires_grad=True for mode '{mode}':")
+    #for name, param in model.named_parameters():
+    #    if param.requires_grad:
+    #        print(f"  {name}")
 
     # Debug print
     print("Number of parameters with requires_grad=True:", sum(p.requires_grad for p in model.parameters()))
@@ -363,9 +363,9 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         batch = tokenize_gpt2_batch(tokenizer, x_batch, y_batch)
         
         # Debug print
-        for key, value in batch.items():
-            if isinstance(value, torch.Tensor):
-                print(f"{key} requires_grad:", value.requires_grad)
+        #for key, value in batch.items():
+        #    if isinstance(value, torch.Tensor):
+        #        print(f"{key} requires_grad:", value.requires_grad)
 
         for name, param in model.named_parameters():
             if param.requires_grad:
@@ -383,8 +383,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         print(f"Loss has grad_fn: {loss.grad_fn is not None}")
 
         # Check if any model parameters require gradients
-        params_require_grad = any(p.requires_grad for p in model.parameters())
-        print(f"Any model parameters require grad: {params_require_grad}")
+        #params_require_grad = any(p.requires_grad for p in model.parameters())
+        #print(f"Any model parameters require grad: {params_require_grad}")
 
         # If using an optimizer, check its param groups
         if optimizer.param_groups:
