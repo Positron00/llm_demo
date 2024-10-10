@@ -372,12 +372,27 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
         model_output = model(**batch, use_cache=False)
         loss = get_loss(model_output.logits, batch['labels'])
-        
-        # Debug print
-        print("Loss requires_grad:", loss.requires_grad)
         loss = loss / grad_accum
-        print(loss)
-        loss.requires_grad = True
+
+        # Debug print
+        print(f"Loss value: {loss.item()}")
+        print(f"Loss requires grad: {loss.requires_grad}")
+        print(f"Loss has grad_fn: {loss.grad_fn is not None}")
+
+        # Check if any model parameters require gradients
+        params_require_grad = any(p.requires_grad for p in model.parameters())
+        print(f"Any model parameters require grad: {params_require_grad}")
+
+        # If using an optimizer, check its param groups
+        if optimizer.param_groups:
+            optim_params_require_grad = any(p.requires_grad for group in optimizer.param_groups for p in group['params'])
+            print(f"Any optimizer parameters require grad: {optim_params_require_grad}")
+
+        # Check individual layers
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(f"{name} requires grad and has size {param.size()}")
+
         loss.backward()
 
         # Debug print
