@@ -108,7 +108,7 @@ def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
 
         # Verification
         print(f"Number of parameters with gradients enabled: {sum(p.requires_grad for p in model.parameters())}")
-        print(f"Total number of parameters: {len(model.parameters())}")
+        print(f"Total number of parameters: {len(parameters)}")
 
         return filter(lambda p: p.requires_grad, model.parameters())
 
