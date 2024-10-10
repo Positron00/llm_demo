@@ -333,6 +333,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             m.attn.c_attn = LoRAConv1DWrapper(m.attn.c_attn, int(mode[4:]))
 
     model.to(DEVICE)
+
     optimizer = torch.optim.Adam(parameters_to_fine_tune(model, mode), lr=2e-5)
 
     # Debug print
@@ -361,7 +362,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         y_batch = [y[i] for i in batch_idxs]
 
         batch = tokenize_gpt2_batch(tokenizer, x_batch, y_batch)
-        
+
         # Debug print
         #for key, value in batch.items():
         #    if isinstance(value, torch.Tensor):
@@ -371,11 +372,13 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             if param.requires_grad:
                 print(f"{name} requires gradient")
 
-
         model.train()  # Set the model to training mode
-        model_output = model(**batch)
+        model_output = model(**batch, use_cache=False)
+
+
         loss = get_loss(model_output.logits, batch['labels'])
         loss = loss / grad_accum
+        loss.requires_grad = True
 
         # Debug print
         print(f"Loss value: {loss.item()}")
