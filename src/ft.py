@@ -167,6 +167,8 @@ def get_loss(logits: torch.tensor, targets: torch.tensor) -> torch.tensor:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
     print(f"Loss requires_grad: {loss.requires_grad}")
+    print(f"Loss has grad_fn: {loss.grad_fn is not None}")
+    
     return loss
 
 
