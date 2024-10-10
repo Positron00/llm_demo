@@ -301,8 +301,8 @@ def tokenize_gpt2_batch(tokenizer, x, y):
                 labels[i,j] = targetTokens[j-lenInput]
 
     tokenized_sequences['labels'] = labels
-    print(tokenized_sequences)
-    print(tokenized_sequences['labels'])
+    #print(tokenized_sequences)
+    #print(tokenized_sequences['labels'])
     
     return tokenized_sequences.to(DEVICE)
 
@@ -323,8 +323,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     model = copy.deepcopy(model)
 
     # Debug print
-    print("Input x requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in x))
-    print("Input y requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in y))
+    #print("Input x requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in x))
+    #print("Input y requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in y))
 
     if mode.startswith('lora'):
         for m in model.transformer.h:
@@ -431,7 +431,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
                 print('Early stopping!')
                 break
 
-        if step == 10:
+        if step == 1:
             break
 
     return model
