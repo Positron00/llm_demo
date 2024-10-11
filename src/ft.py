@@ -321,6 +321,7 @@ def add_prefixes(x: List[str], y: List[str], dataset: str) -> Tuple[List[str], L
 def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     x, y = add_prefixes(x, y, dataset)
     model = copy.deepcopy(model)
+    model.train()
 
     # Debug print
     #print("Input x requires_grad:", any(isinstance(item, torch.Tensor) and item.requires_grad for item in x))
@@ -350,7 +351,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     pbar = tqdm.tqdm(range(max_n))
     idxs = []
     for step in pbar:
-        model.train()
+        #model.train()
 
         if len(idxs) < batch_size // grad_accum:
             idxs = list(range(len(x)))
