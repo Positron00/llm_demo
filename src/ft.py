@@ -343,7 +343,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     #        print(f"  {name}")
 
     # Debug print
-    print("Number of parameters with requires_grad=True:", sum(p.requires_grad for p in model.parameters()))
+    print("Number of parameters with requires_grad=True before fine-tuning:", sum(p.requires_grad for p in model.parameters()))
 
     all_both = tokenize_gpt2_batch(tokenizer, x, y)
     max_n = len(x) * 10
@@ -370,14 +370,17 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
         for name, param in model.named_parameters():
             if param.requires_grad:
-                print(f"{name} requires gradient")
+                print(f"Before next step: {name} requires gradient")
 
         model.train()  # Set the model to training mode
+        print("forward pass....")
         model_output = model(**batch, use_cache=False)
 
-
+        print("get loss....")
         loss = get_loss(model_output.logits, batch['labels'])
+        print("rescale loss by grad_accum....")
         loss = loss / grad_accum
+        print("set loss requires_grad to True....")
         loss.requires_grad = True
 
         # Debug print
@@ -391,31 +394,36 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
         # If using an optimizer, check its param groups
         if optimizer.param_groups:
+            print("check optimizer param groups....")
             optim_params_require_grad = any(p.requires_grad for group in optimizer.param_groups for p in group['params'])
             print(f"Any optimizer parameters require grad: {optim_params_require_grad}")
 
         # Check individual layers
+        print("check individual layers....")
         for name, param in model.named_parameters():
             if param.requires_grad:
                 print(f"{name} requires grad and has size {param.size()}")
 
+        print("backward pass....")
         loss.backward()
 
         # Debug print
         print("Gradients after backward:")
         for name, param in model.named_parameters():
             if param.requires_grad:
-                print(f"{name}: {param.grad is not None}")
+                print(f"{name}: has gradient? {param.grad is not None}")
 
         if (step + 1) % grad_accum == 0 and step != 0:
+            print("optimizer step....")
             optimizer.step()
+            print("optimizer zero grad....")
             optimizer.zero_grad()
 
             # Debug print
-            print("Parameter update check:")
+            print("Parameter update check after optimizer step:")
             for name, param in model.named_parameters():
                 if param.requires_grad:
-                    print(f"{name} updated: {param.grad is not None}")
+                    print(f"{name} updated, has gradient: {param.grad is not None}")
 
         pbar.set_description(f"Loss: {loss.item() * grad_accum:.4f}")
 
