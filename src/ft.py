@@ -419,6 +419,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
         pbar.set_description(f"Loss: {loss.item() * grad_accum:.4f}")
 
+        print(f"Step: {step}")
+
         if step % (grad_accum * 5) == 0:
             with torch.inference_mode():
                 model.eval()
