@@ -417,7 +417,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
                 if param.requires_grad:
                     print(f"{name} updated: {param.grad is not None}")
 
-        pbar.set_postfix(loss=loss.item())
+        pbar.set_description(f"Loss: {loss.item() * grad_accum:.4f}")
 
         if step % (grad_accum * 5) == 0:
             with torch.inference_mode():
