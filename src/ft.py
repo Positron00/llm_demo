@@ -407,7 +407,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             if param.requires_grad:
                 print(f"{name}: {param.grad is not None}")
 
-        if (step + 1) % grad_accum == 0:
+        if (step + 1) % grad_accum == 0 and step != 0:
             optimizer.step()
             optimizer.zero_grad()
 
