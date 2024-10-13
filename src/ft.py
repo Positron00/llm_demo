@@ -160,7 +160,7 @@ def get_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         logits = logits.view(-1, logits.size(-1))
         targets = targets.view(-1)
 
-        loss = F.cross_entropy(logits, targets, ignore_index=-100)
+        loss = F.cross_entropy(logits, targets, ignore_index=-100, reduction='mean')
     else:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
