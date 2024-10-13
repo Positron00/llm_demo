@@ -154,13 +154,17 @@ def get_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
     if logits.dim() == 2:
         loss = F.cross_entropy(logits, targets)
     elif logits.dim() == 3:
-        logits = logits[:, :-1, :].contiguous()
-        targets = targets[:, 1:].contiguous()
+        #logits = logits[:, :-1, :].contiguous()
+        #targets = targets[:, 1:].contiguous()
 
-        logits = logits.view(-1, logits.size(-1))
-        targets = targets.view(-1)
+        #logits = logits.view(-1, logits.size(-1))
+        #targets = targets.view(-1)
 
-        loss = F.cross_entropy(logits, targets, ignore_index=-100, reduction='mean')
+        #loss = F.cross_entropy(logits, targets, ignore_index=-100, reduction='mean')
+
+        logits = logits[:, :-1, :]
+        targets = targets[:, 1:]
+        loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1), ignore_index=-100, reduction='mean')
     else:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
@@ -299,6 +303,7 @@ def tokenize_gpt2_batch(tokenizer, x, y):
                 labels[i,j] = targetTokens[j-lenInput]
 
     tokenized_sequences['labels'] = labels
+    tokenized_sequences['labels'].requires_grad_(True)
         
     #print(tokenized_sequences)
     #print(tokenized_sequences['labels'])
@@ -363,9 +368,6 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         y_batch = [y[i] for i in batch_idxs]
 
         batch = tokenize_gpt2_batch(tokenizer, x_batch, y_batch)
-
-        # Move batch to device and enable gradients
-        batch = {k: v.to(DEVICE).requires_grad_(True) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
 
         # Debug print
         #for key, value in batch.items():
