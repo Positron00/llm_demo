@@ -303,7 +303,7 @@ def tokenize_gpt2_batch(tokenizer, x, y):
                 labels[i,j] = targetTokens[j-lenInput]
 
     tokenized_sequences['labels'] = labels
-    tokenized_sequences['labels'].requires_grad_(True)
+    #tokenized_sequences['labels'].requires_grad_(True)
         
     #print(tokenized_sequences)
     #print(tokenized_sequences['labels'])
