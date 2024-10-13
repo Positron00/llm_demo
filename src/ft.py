@@ -298,7 +298,8 @@ def tokenize_gpt2_batch(tokenizer, x, y):
             if targetMask[j-lenInput] == 1:
                 labels[i,j] = targetTokens[j-lenInput]
 
-    tokenized_sequences['labels'] = labels.float()
+    tokenized_sequences['labels'] = labels
+        
     #print(tokenized_sequences)
     #print(tokenized_sequences['labels'])
     
