@@ -128,7 +128,7 @@ def parameters_to_fine_tune(model: nn.Module, mode: str) -> List:
         raise NotImplementedError()
 
 
-def get_loss(logits: torch.tensor, targets: torch.tensor) -> torch.tensor:
+def get_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
     """
     Computes the cross-entropy loss for either sequence classification or generation.
 
@@ -152,8 +152,7 @@ def get_loss(logits: torch.tensor, targets: torch.tensor) -> torch.tensor:
     """
 
     if logits.dim() == 2:
-        loss = F.cross_entropy(logits, targets).mean()
-
+        loss = F.cross_entropy(logits, targets)
     elif logits.dim() == 3:
         logits = logits[:, :-1, :].contiguous()
         targets = targets[:, 1:].contiguous()
@@ -162,7 +161,6 @@ def get_loss(logits: torch.tensor, targets: torch.tensor) -> torch.tensor:
         targets = targets.view(-1)
 
         loss = F.cross_entropy(logits, targets, ignore_index=-100)
-
     else:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
