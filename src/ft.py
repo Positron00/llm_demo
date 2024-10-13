@@ -373,17 +373,18 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             if param.requires_grad:
                 print(f"Before next step: {name} requires gradient")
 
-        model.train()  # Set the model to training mode
-        print("forward pass....")
-        model_output = model(**batch, use_cache=False)
+        with torch.set_grad_enabled(True):
+            model.train()  # Set the model to training mode
+            print("forward pass....")
+            model_output = model(**batch, use_cache=False)
 
-        logits = model_output.logits
-        print(f"Logits requires_grad: {logits.requires_grad}")
+            logits = model_output.logits
+            print(f"Logits requires_grad: {logits.requires_grad}")
 
-        print("get loss....")
-        loss = get_loss(model_output.logits, batch['labels'])
-        print("rescale loss by grad_accum....")
-        loss = loss / grad_accum
+            print("get loss....")
+            loss = get_loss(model_output.logits, batch['labels'])
+            print("rescale loss by grad_accum....")
+            loss = loss / grad_accum
 
         # Debug print
         print(f"Loss value: {loss.item()}")
