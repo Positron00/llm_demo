@@ -162,9 +162,12 @@ def get_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
 
         #loss = F.cross_entropy(logits, targets, ignore_index=-100, reduction='mean')
 
-        logits = logits[:, :-1, :]
-        targets = targets[:, 1:]
-        loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1), ignore_index=-100, reduction='mean')
+        shift_logits = logits[:, :-1, :].contiguous()
+        shift_labels = targets[:, 1:].contiguous()
+        loss = F.cross_entropy(shift_logits.view(-1, shift_logits.size(-1)), 
+                               shift_labels.view(-1), 
+                               ignore_index=-100, 
+                               reduction='mean')
     else:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
