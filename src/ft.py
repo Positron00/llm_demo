@@ -336,7 +336,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     model.to(DEVICE)
 
     optimizer = torch.optim.Adam(parameters_to_fine_tune(model, mode), lr=2e-5)
-
+    optimizer.zero_grad()
+    
     # Debug print
     #print(f"Parameters with requires_grad=True for mode '{mode}':")
     #for name, param in model.named_parameters():
