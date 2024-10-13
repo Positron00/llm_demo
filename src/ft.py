@@ -364,6 +364,9 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
 
         batch = tokenize_gpt2_batch(tokenizer, x_batch, y_batch)
 
+        # Move batch to device and enable gradients
+        batch = {k: v.to(DEVICE).requires_grad_(True) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
+
         # Debug print
         #for key, value in batch.items():
         #    if isinstance(value, torch.Tensor):
@@ -373,8 +376,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             if param.requires_grad:
                 print(f"Before next step: {name} requires gradient")
 
+        model.train()  # Set the model to training mode
         with torch.set_grad_enabled(True):
-            model.train()  # Set the model to training mode
             print("forward pass....")
             model_output = model(**batch, use_cache=False)
 
