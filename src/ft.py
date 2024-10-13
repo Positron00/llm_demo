@@ -305,7 +305,7 @@ def tokenize_gpt2_batch(tokenizer, x, y):
             if targetMask[j-lenInput] == 1:
                 labels[i,j] = targetTokens[j-lenInput]
 
-    tokenized_sequences['labels'] = labels
+    tokenized_sequences['labels'] = labels.contiguous()
     #tokenized_sequences['labels'].requires_grad_(True)
         
     #print(tokenized_sequences)
