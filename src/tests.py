@@ -135,3 +135,34 @@ class Test_icl(unittest.TestCase):
             assert prompt_custom[-1] != " ", "Prompt format for custom should not have a space at the end"
 
         print('Prompt formats are all good!')
+
+
+class Test_ft(unittest.TestCase):
+    def setUp(self):
+        # Cache the datasets and models needed to avoid timeout on the test cases
+        utils.get_model_and_tokenizer('gpt2-med', transformers.AutoModelForCausalLM)
+        self.parameters_to_fine_tune = ft.parameters_to_fine_tune
+
+    def test_ft_modes(self):
+        """Basic test case for testing the parameters to fine tune in mode 'last', 'first' and 'middle'."""
+        
+        model, _ = utils.get_model_and_tokenizer('gpt2-med', transformers.AutoModelForCausalLM)
+
+        last_parameters = [parameter for parameter in self.parameters_to_fine_tune(model, "last")]
+        first_parameters = [parameter for parameter in self.parameters_to_fine_tune(model, "first")]
+        middle_parameters = [parameter for parameter in self.parameters_to_fine_tune(model, "middle")]
+
+        # Check that the number of parameters to be optimized match
+        self.assertTrue(
+            len(last_parameters) == 24, 
+            "Incorrect number of parameters to be optimized returned by parameters_to_fine_tune for `last` mode!"
+        )
+        self.assertTrue(
+            len(first_parameters) == 24,
+            "Incorrect number of parameters to be optimized returned by parameters_to_fine_tune for `first` mode!"
+        )
+        self.assertTrue(
+            len(middle_parameters) == 24, 
+            "Incorrect number of parameters to be optimized returned by parameters_to_fine_tune for `middle` mode!"
+        )
+
