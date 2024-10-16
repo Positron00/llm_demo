@@ -1,4 +1,4 @@
-import os, unittest
+import os, unittest, copy
 import torch
 import transformers
 
@@ -139,18 +139,16 @@ class Test_icl(unittest.TestCase):
 
 class Test_ft(unittest.TestCase):
     def setUp(self):
-        # Cache the datasets and models needed to avoid timeout on the test cases
-        utils.get_model_and_tokenizer('gpt2-med', transformers.AutoModelForCausalLM)
+        # Cache the datasets and models needed
+        self.model, self.tokenizer = utils.get_model_and_tokenizer('gpt2-med', transformers.AutoModelForCausalLM)
         self.parameters_to_fine_tune = ft.parameters_to_fine_tune
 
     def test_ft_modes(self):
         """Basic test case for testing the parameters to fine tune in mode 'last', 'first' and 'middle'."""
         
-        model, _ = utils.get_model_and_tokenizer('gpt2-med', transformers.AutoModelForCausalLM)
-
-        last_parameters = [parameter for parameter in self.parameters_to_fine_tune(model, "last")]
-        first_parameters = [parameter for parameter in self.parameters_to_fine_tune(model, "first")]
-        middle_parameters = [parameter for parameter in self.parameters_to_fine_tune(model, "middle")]
+        last_parameters = [parameter for parameter in self.parameters_to_fine_tune(self.model, "last")]
+        first_parameters = [parameter for parameter in self.parameters_to_fine_tune(self.model, "first")]
+        middle_parameters = [parameter for parameter in self.parameters_to_fine_tune(self.model, "middle")]
 
         # Check that the number of parameters to be optimized match
         self.assertTrue(
@@ -166,3 +164,31 @@ class Test_ft(unittest.TestCase):
             "Incorrect number of parameters to be optimized returned by parameters_to_fine_tune for `middle` mode!"
         )
 
+    def test_gradient_tracking(self, mode):
+        """Basic test case for testing that the gradient is tracked correctly."""
+        model = copy.deepcopy(self.model)
+        model.gradient_checkpointing_disable() # crucial for keeping computational graph unbroken
+        model.train()
+
+        optimizer = torch.optim.Adam(self.parameters_to_fine_tune(model, mode), lr=2e-5)
+        optimizer.zero_grad()
+
+        x = ["Hello, how are you?", "I'm fine, thank you!"]
+        y = [" I'm fine too.", " You're welcome!"]
+
+        batch = self.tokenizer(x, y, return_tensors='pt')
+
+        model_output = model(**batch, use_cache=False)
+        logits = model_output.logits
+        loss = ft.get_loss(logits, batch['labels'])
+
+        print(f"Loss requires_grad: {loss.requires_grad}")
+        print(f"Loss has grad_fn: {loss.grad_fn is not None}")
+
+        loss.backward()
+
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(f"{name}: has gradient? {param.grad is not None}")
+
+        optimizer.step()
