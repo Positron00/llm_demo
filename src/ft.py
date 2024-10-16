@@ -328,7 +328,7 @@ def add_prefixes(x: List[str], y: List[str], dataset: str) -> Tuple[List[str], L
 def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     x, y = add_prefixes(x, y, dataset)
     model = copy.deepcopy(model)
-    model.gradient_checkpointing_disable()
+    model.gradient_checkpointing_disable() # crucial for keeping computational graph unbroken
     model.train()
 
     # Debug print
@@ -391,8 +391,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             print(f"Logits requires_grad: {logits.requires_grad}")
 
             print("get loss....")
-            #loss = get_loss(model_output.logits, batch['labels'])
-            loss = model_output.loss
+            loss = get_loss(model_output.logits, batch['labels'])
+            #loss = model_output.loss
             print("rescale loss by grad_accum....")
             loss = loss / grad_accum
 
