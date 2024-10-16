@@ -328,6 +328,7 @@ def add_prefixes(x: List[str], y: List[str], dataset: str) -> Tuple[List[str], L
 def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
     x, y = add_prefixes(x, y, dataset)
     model = copy.deepcopy(model)
+    model.gradient_checkpointing_disable()
     model.train()
 
     # Debug print
