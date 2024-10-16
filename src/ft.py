@@ -154,20 +154,13 @@ def get_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
     if logits.dim() == 2:
         loss = F.cross_entropy(logits, targets)
     elif logits.dim() == 3:
-        #logits = logits[:, :-1, :].contiguous()
-        #targets = targets[:, 1:].contiguous()
+        logits = logits[:, :-1, :].contiguous()
+        targets = targets[:, 1:].contiguous()
 
-        #logits = logits.view(-1, logits.size(-1))
-        #targets = targets.view(-1)
+        logits = logits.view(-1, logits.size(-1))
+        targets = targets.view(-1)
 
-        #loss = F.cross_entropy(logits, targets, ignore_index=-100, reduction='mean')
-
-        shift_logits = logits[:, :-1, :].contiguous()
-        shift_labels = targets[:, 1:].contiguous()
-        loss = F.cross_entropy(shift_logits.view(-1, shift_logits.size(-1)), 
-                               shift_labels.view(-1), 
-                               ignore_index=-100, 
-                               reduction='mean')
+        loss = F.cross_entropy(logits, targets, ignore_index=-100, reduction='mean')
     else:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
@@ -377,9 +370,9 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
         #    if isinstance(value, torch.Tensor):
         #        print(f"{key} requires_grad:", value.requires_grad)
 
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                print(f"Before next step: {name} requires gradient")
+        #for name, param in model.named_parameters():
+        #    if param.requires_grad:
+        #        print(f"Before next step: {name} requires gradient")
 
         model.train()  # Set the model to training mode
         with torch.set_grad_enabled(True):
@@ -432,12 +425,12 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             optimizer.zero_grad()
 
             # Debug print
-            print("Parameter update check after optimizer step:")
-            for name, param in model.named_parameters():
-                if param.requires_grad:
-                    print(f"{name} updated, has gradient: {param.grad is not None}")
+            #print("Parameter update check after optimizer step:")
+            #for name, param in model.named_parameters():
+            #    if param.requires_grad:
+            #        print(f"{name} updated, has gradient: {param.grad is not None}")
 
-        pbar.set_description(f"Loss: {loss.item() * grad_accum:.4f}")
+        pbar.set_description(f"Loss: {loss.item():.4f}")
 
         print(f"Step: {step}")
 
@@ -456,8 +449,8 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
                 print('Early stopping!')
                 break
 
-        if step == 41:
-            break
+        #if step == 41:
+        #    break
 
     return model
 
