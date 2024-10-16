@@ -1,10 +1,12 @@
 # The code below should be added to a util.py file
-
+import os
 import requests
 import json
-
+from PIL import Image
+from io import BytesIO
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv, find_dotenv
-import os
+from pygments import highlight, lexers, formatters
 from wolframalpha import Client
 
 def load_env():
@@ -12,29 +14,6 @@ def load_env():
 
   # The right API to pass in a prompt (of type string) is the completions API https://docs.together.ai/reference/completions-1
   # The right API to pass in a messages (of type of list of message) is The chat completions API https://docs.together.ai/reference/chat-completions-1
-
-def llama32(messages, model_size=11):
-  model = f"meta-llama/Llama-3.2-{model_size}B-Vision-Instruct-Turbo"
-  url = f"{os.getenv('DLAI_TOGETHER_API_BASE', 'https://api.together.xyz')}/v1/chat/completions"
-  payload = {
-    "model": model,
-    "max_tokens": 4096,
-    "temperature": 0.0,
-    "stop": ["<|eot_id|>","<|eom_id|>"],
-    "messages": messages
-  }
-
-  headers = {
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {os.getenv('TOGETHER_API_KEY')}"
-  }
-  res = json.loads(requests.request("POST", url, headers=headers, data=json.dumps(payload)).content)
-
-  if 'error' in res:
-    raise Exception(res['error'])
-
-  return res['choices'][0]['message']['content']
 
 def get_wolfram_alpha_api_key():
     load_env()
@@ -45,7 +24,6 @@ def get_tavily_api_key():
     load_env()
     tavily_api_key = os.getenv("TAVILY_API_KEY")
     return tavily_api_key
-
 
 def llama31(prompt_or_messages, model_size=8, temperature=0, raw=False, debug=False):
     model = f"meta-llama/Meta-Llama-3.1-{model_size}B-Instruct-Turbo"
@@ -95,11 +73,68 @@ def llama31(prompt_or_messages, model_size=8, temperature=0, raw=False, debug=Fa
     else:
         return res['choices'][0].get('message', {}).get('content', '')
 
-import os
-import requests
-from PIL import Image
-from io import BytesIO
-import matplotlib.pyplot as plt
+def llama32(messages, model_size=11):
+  model = f"meta-llama/Llama-3.2-{model_size}B-Vision-Instruct-Turbo"
+  url = f"{os.getenv('DLAI_TOGETHER_API_BASE', 'https://api.together.xyz')}/v1/chat/completions"
+  payload = {
+    "model": model,
+    "max_tokens": 4096,
+    "temperature": 0.0,
+    "stop": ["<|eot_id|>","<|eom_id|>"],
+    "messages": messages
+  }
+
+  headers = {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {os.getenv('TOGETHER_API_KEY')}"
+  }
+  res = json.loads(requests.request("POST", url, headers=headers, data=json.dumps(payload)).content)
+
+  if 'error' in res:
+    raise Exception(res['error'])
+
+  return res['choices'][0]['message']['content']
+
+def llamaguard3(prompt, debug=False):
+  model = "meta-llama/Meta-Llama-Guard-3-8B"
+  url = f"{os.getenv('DLAI_TOGETHER_API_BASE', 'https://api.together.xyz')}/v1/completions"
+  payload = {
+    "model": model,
+    "temperature": 0,
+    "prompt": prompt,
+    "max_tokens": 4096,
+  }
+
+  headers = {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + os.environ["TOGETHER_API_KEY"]
+  }
+  res = json.loads(requests.request("POST", url, headers=headers, data=json.dumps(payload)).content)
+
+  if 'error' in res:
+    raise Exception(res['error'])
+
+  if debug:
+    print(res)
+  return res['choices'][0]['text']
+
+def html_tokens(tokens):
+  # simulate the color values used in https://tiktokenizer.vercel.app
+  on_colors = ["#ADE0FC", "#FCE278", "#B2D1FE", "#AFF7C6", "#FDCE9B", "#97F1FB", "#DEE1E7", "#E3C9FF", "#BBC6FD", "#D1FB8C"]
+
+  # Create an HTML string with colored spans
+  html_string = ""
+  for i, t in enumerate(tokens):
+      if t == "\n":
+            t = "\\n"
+      elif t == "\n\n":
+            t = "\\n\\n"
+      on_col = on_colors[i % len(on_colors)]
+      html_string += f'<span style="color: black; background-color: {on_col}; padding: 2px;">{t}</span>'
+
+  return html_string
 
 def disp_image(address):
     if address.startswith("http://") or address.startswith("https://"):
@@ -133,9 +168,6 @@ def resize_image(img, max_dimension = 1120):
 
   return resized_img
 
-
-from PIL import Image
-
 def merge_images(image_1, image_2, image_3):
     img1 = Image.open(image_1)
     img2 = Image.open(image_2)
@@ -163,10 +195,7 @@ def merge_images(image_1, image_2, image_3):
     print("Merged image dimensions:", merged_image.size)
     return merged_image
 
-
-
 # pretty print JSON with syntax highlighting
-from pygments import highlight, lexers, formatters
 def cprint(response):
     formatted_json = json.dumps(response, indent=4)
     colorful_json = highlight(formatted_json,
@@ -189,8 +218,6 @@ def wolfram_alpha(query: str) -> str:
             results.append(sub.plaintext)
 
     return '\n'.join(results)
-
-
 
 def get_boiling_point(liquid_name, celsius):
   # function body
