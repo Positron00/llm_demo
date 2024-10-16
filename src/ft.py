@@ -404,19 +404,19 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
             print(f"Any optimizer parameters require grad: {optim_params_require_grad}")
 
         # Check individual layers
-        print("check individual layers....")
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                print(f"{name} requires grad and has size {param.size()}")
+        #print("check individual layers....")
+        #for name, param in model.named_parameters():
+        #    if param.requires_grad:
+        #        print(f"{name} requires grad and has size {param.size()}")
 
         print("backpropagate....")
         loss.backward()
 
         # Debug print
-        print("Gradients after backward:")
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                print(f"{name}: has gradient? {param.grad is not None}")
+        #print("Gradients after backward:")
+        #for name, param in model.named_parameters():
+        #    if param.requires_grad:
+        #        print(f"{name}: has gradient? {param.grad is not None}")
 
         if (step + 1) % grad_accum == 0 and step != 0:
             print("optimizer step....")
