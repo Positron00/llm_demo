@@ -306,7 +306,6 @@ def tokenize_gpt2_batch(tokenizer, x, y):
                 labels[i,j] = targetTokens[j-lenInput]
 
     tokenized_sequences['labels'] = labels.contiguous()
-    #tokenized_sequences['labels'].requires_grad_(True)
         
     #print(tokenized_sequences)
     #print(tokenized_sequences['labels'])
@@ -457,7 +456,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
                 print('Early stopping!')
                 break
 
-        if step == 1:
+        if step == 41:
             break
 
     return model
