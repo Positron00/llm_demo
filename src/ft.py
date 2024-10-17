@@ -164,8 +164,8 @@ def get_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
     else:
         raise ValueError(f'Logits should either be 2-dim (for classification) or 3-dim (for generation); got {logits.dim()}')
 
-    print(f"Loss requires_grad: {loss.requires_grad}")
-    print(f"Loss has grad_fn: {loss.grad_fn is not None}")
+    #print(f"Loss requires_grad: {loss.requires_grad}")
+    #print(f"Loss has grad_fn: {loss.grad_fn is not None}")
     
     return loss
 
@@ -317,7 +317,7 @@ def add_prefixes(x: List[str], y: List[str], dataset: str) -> Tuple[List[str], L
     return x, y
 
 
-def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=8):
+def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=4):
     x, y = add_prefixes(x, y, dataset)
     model = copy.deepcopy(model)
     model.gradient_checkpointing_disable() # crucial for keeping computational graph unbroken
