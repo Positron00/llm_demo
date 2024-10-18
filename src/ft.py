@@ -382,10 +382,10 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=4):
             logits = model_output.logits
             print(f"Logits requires_grad: {logits.requires_grad}")
 
-            print("get loss....")
+            #print("get loss....")
             loss = get_loss(model_output.logits, batch['labels'])
             #loss = model_output.loss
-            print("rescale loss by grad_accum....")
+            #print("rescale loss by grad_accum....")
             loss = loss / grad_accum
 
         # Debug print
@@ -409,7 +409,7 @@ def ft_gpt2(model, tokenizer, x, y, mode, dataset, batch_size=8, grad_accum=4):
         #    if param.requires_grad:
         #        print(f"{name} requires grad and has size {param.size()}")
 
-        print("backpropagate....")
+        #print("backpropagate....")
         loss.backward()
 
         # Debug print
