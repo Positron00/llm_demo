@@ -9,9 +9,6 @@ from dotenv import load_dotenv, find_dotenv
 from pygments import highlight, lexers, formatters
 from wolframalpha import Client
 
-import base64
-from IPython.display import Image, display
-
 def load_env():
     _ = load_dotenv(find_dotenv())
 
@@ -225,6 +222,9 @@ def wolfram_alpha(query: str) -> str:
 def get_boiling_point(liquid_name, celsius):
   # function body
   return []
+
+import base64
+from IPython.display import Image, display
 
 def mm(graph):
   graphbytes = graph.encode("ascii")
