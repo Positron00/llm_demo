@@ -353,3 +353,9 @@ def mem_context():
       embeddings --> LLM
       classDef default fill:#CCE6FF,stroke:#84BCF5,textColor:#1C2B33,fontFamily:trebuchet ms;
   """)
+
+from getpass import getpass
+
+REPLICATE_API_TOKEN = getpass()
+
+os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
