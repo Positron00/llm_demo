@@ -197,7 +197,7 @@ class Test_ft(unittest.TestCase):
 import utilsLlama
 import replicate
 
-class Test_llama:
+class Test_llama(unittest.TestCase):
     def llama2_7b(self, prompt):
         output = replicate.run(
             "meta/llama-2-7b-chat",
