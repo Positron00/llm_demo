@@ -197,30 +197,31 @@ class Test_ft(unittest.TestCase):
 import utilsLlama
 import replicate
 
-def llama2_7b(prompt):
-    output = replicate.run(
-      "meta/llama-2-7b-chat",
-      input={"prompt": prompt}
-    )
-    return ''.join(output)
+class Test_llama:
+    def llama2_7b(self, prompt):
+        output = replicate.run(
+            "meta/llama-2-7b-chat",
+            input={"prompt": prompt}
+        )
+        return ''.join(output)
 
-def llama2_70b(prompt):
-    output = replicate.run(
-      "meta/llama-2-70b-chat",
-      input={"prompt": prompt}
-    )
-    return ''.join(output)
+    def llama2_70b(self, prompt):
+        output = replicate.run(
+            "meta/llama-2-70b-chat",
+            input={"prompt": prompt}
+        )
+        return ''.join(output)
 
-def llama3_8b(prompt):
-    output = replicate.run(
-      "meta/meta-llama-3-8b-instruct",
-      input={"prompt": prompt}
-    )
-    return ''.join(output)
+    def llama3_8b(self, prompt):
+        output = replicate.run(
+            "meta/meta-llama-3-8b-instruct",
+            input={"prompt": prompt}
+        )
+        return ''.join(output)
 
-def llama3_70b(prompt):
-    output = replicate.run(
-      "meta/meta-llama-3-70b-instruct",
-      input={"prompt": prompt}
-    )
-    return ''.join(output)
+    def llama3_70b(self, prompt):
+        output = replicate.run(
+            "meta/meta-llama-3-70b-instruct",
+            input={"prompt": prompt}
+        )
+        return ''.join(output)
