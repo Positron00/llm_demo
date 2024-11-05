@@ -1,39 +1,25 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
-# 
-# <a href="https://colab.research.google.com/github/meta-llama/llama-recipes/blob/main/recipes/quickstart/finetuning/quickstart_peft_finetuning.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
-
 # ## PEFT Finetuning Quick Start Notebook
 # 
 # This notebook shows how to train a Meta Llama 3 model on a single GPU (e.g. A10 with 24GB) using int8 quantization and LoRA finetuning.
 # 
-# **_Note:_** To run this notebook on a machine with less than 24GB VRAM (e.g. T4 with 16GB) the context length of the training dataset needs to be adapted.
-# We do this based on the available VRAM during execution.
-# If you run into OOM issues try to further lower the value of train_config.context_length.
+# **_Note:_** To run this notebook on a machine with less than 24GB VRAM (e.g. T4 with 16GB) the context length of the training dataset 
+# needs to be adapted. We do this based on the available VRAM during execution. If you run into OOM issues try to further lower the value 
+# of train_config.context_length.
 
-# ### Step 0: Install pre-requirements and convert checkpoint
-# 
-# We need to have llama-recipes and its dependencies installed for this notebook. Additionally, we need to log in with the huggingface_cli and make sure that the account is able to to access the Meta Llama weights.
+# ### Step 0: Install pre-requirements and convert checkpoint 
+# We need to have llama-recipes and its dependencies installed for this notebook. Additionally, we need to log in with the huggingface_cli 
+# and make sure that the account is able to to access the Meta Llama weights.
 
-# In[1]:
-
-
-# uncomment if running from Colab T4
 # ! pip install llama-recipes ipywidgets
 
-# import huggingface_hub
-# huggingface_hub.login()
+import huggingface_hub
+huggingface_hub.login()
 
-
-# ### Step 1: Load the model
-# 
+# ### Step 1: Load the model 
 # Setup training configuration and load the model and tokenizer.
-
-# In[2]:
-
 
 import torch
 from transformers import LlamaForCausalLM, AutoTokenizer
@@ -71,12 +57,8 @@ tokenizer = AutoTokenizer.from_pretrained(train_config.model_name)
 tokenizer.pad_token = tokenizer.eos_token
 
 
-# ### Step 2: Check base model
-# 
+# ### Step 2: Check base model 
 # Run the base model on an example input:
-
-# In[3]:
-
 
 eval_prompt = """
 Summarize this dialog:
@@ -107,15 +89,8 @@ model.eval()
 with torch.inference_mode():
     print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
 
-
-# We can see that the base model only repeats the conversation.
-# 
 # ### Step 3: Load the preprocessed dataset
-# 
 # We load and preprocess the samsum dataset which consists of curated pairs of dialogs and their summarization:
-
-# In[4]:
-
 
 from llama_recipes.configs.datasets import samsum_dataset
 from llama_recipes.utils.dataset_utils import get_dataloader
@@ -125,13 +100,8 @@ samsum_dataset.trust_remote_code = True
 train_dataloader = get_dataloader(tokenizer, samsum_dataset, train_config)
 eval_dataloader = get_dataloader(tokenizer, samsum_dataset, train_config, "val")
 
-
 # ### Step 4: Prepare model for PEFT
-# 
 # Let's prepare the model for Parameter Efficient Fine Tuning (PEFT):
-
-# In[5]:
-
 
 from peft import get_peft_model, prepare_model_for_kbit_training, LoraConfig
 from dataclasses import asdict
@@ -147,13 +117,8 @@ peft_config = LoraConfig(**asdict(lora_config))
 model = prepare_model_for_kbit_training(model)
 model = get_peft_model(model, peft_config)
 
-
 # ### Step 5: Fine tune the model
-# 
 # Here, we fine tune the model for a single epoch.
-
-# In[6]:
-
 
 import torch.optim as optim
 from llama_recipes.utils.train_utils import train
@@ -184,21 +149,13 @@ results = train(
     wandb_run=None,
 )
 
-
 # ### Step 6:
 # Save model checkpoint
-
-# In[7]:
-
-
 model.save_pretrained(train_config.output_dir)
 
 
 # ### Step 7:
 # Try the fine tuned model on the same example again to see the learning progress:
-
-# In[8]:
-
 
 model.eval()
 with torch.inference_mode():
