@@ -85,9 +85,9 @@ Summary:
 
 model_input = tokenizer(eval_prompt, return_tensors="pt").to("cuda")
 
-model.eval()
-with torch.inference_mode():
-    print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
+#model.eval()
+#with torch.inference_mode():
+#    print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
 
 # ### Step 3: Load the preprocessed dataset
 # We load and preprocess the samsum dataset which consists of curated pairs of dialogs and their summarization:
