@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ## PEFT Finetuning Quick Start Notebook
+# ## PEFT Finetuning Quick Start
 # 
-# This notebook shows how to train a Meta Llama 3 model on a single GPU (e.g. A10 with 24GB) using int8 quantization and LoRA finetuning.
+# Train a Meta Llama 3 model on a single GPU (e.g. A10 with 24GB) using int8 quantization and LoRA finetuning.
 # 
-# **_Note:_** To run this notebook on a machine with less than 24GB VRAM (e.g. T4 with 16GB) the context length of the training dataset 
+# **_Note:_** To run this code on a machine with less than 24GB VRAM (e.g. T4 with 16GB) the context length of the training dataset 
 # needs to be adapted. We do this based on the available VRAM during execution. If you run into OOM issues try to further lower the value 
 # of train_config.context_length.
 
 # ### Step 0: Install pre-requirements and convert checkpoint 
-# We need to have llama-recipes and its dependencies installed for this notebook. Additionally, we need to log in with the huggingface_cli 
+# We need to have llama-recipes and its dependencies installed. Additionally, we need to log in with the huggingface_cli 
 # and make sure that the account is able to to access the Meta Llama weights.
 
 # ! pip install llama-recipes ipywidgets
@@ -25,7 +25,21 @@ import torch
 from transformers import LlamaForCausalLM, AutoTokenizer
 from llama_recipes.configs import train_config as TRAIN_CONFIG
 
-train_config = TRAIN_CONFIG()
+# make a class for the training configuration
+class TrainingConfig:
+    def __init__(self):
+        self.model_name = "meta-llama/Meta-Llama-3.1-8B"
+
+
+# make a class for PEFT
+class PEFTConfig:
+    def __init__(self):
+        self.r = 8
+        self.lora_alpha = 32
+        self.lora_dropout = 0.01
+        
+
+        
 train_config.model_name = "meta-llama/Meta-Llama-3.1-8B"
 train_config.num_epochs = 1
 train_config.run_validation = False
