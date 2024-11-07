@@ -53,9 +53,7 @@ class PEFTConfig:
 train_config = TrainingConfig()
 
 from transformers import BitsAndBytesConfig
-config = BitsAndBytesConfig(
-    load_in_8bit=True,
-)
+config = BitsAndBytesConfig(load_in_8bit=True)
 
 model = LlamaForCausalLM.from_pretrained(
             train_config.model_name,
@@ -137,36 +135,38 @@ import torch.optim as optim
 from llama_recipes.utils.train_utils import train
 from torch.optim.lr_scheduler import StepLR
 
-model.train()
+def peft_train(model, train_config, train_dataloader, eval_dataloader, tokenizer):
+    model.train()
 
-optimizer = optim.AdamW(
-            model.parameters(),
-            lr=train_config.lr,
-            weight_decay=train_config.weight_decay,
-        )
-scheduler = StepLR(optimizer, step_size=1, gamma=train_config.gamma)
+    optimizer = optim.AdamW(
+                model.parameters(),
+                lr=train_config.lr,
+                weight_decay=train_config.weight_decay,
+            )
+    scheduler = StepLR(optimizer, step_size=1, gamma=train_config.gamma)
 
-# Start the training process
-results = train(
-    model,
-    train_dataloader,
-    eval_dataloader,
-    tokenizer,
-    optimizer,
-    scheduler,
-    train_config.gradient_accumulation_steps,
-    train_config,
-    None,
-    None,
-    None,
-    wandb_run=None,
-)
+    # Start the training process
+    results = train(
+        model,
+        train_dataloader,
+        eval_dataloader,
+        tokenizer,
+        optimizer,
+        scheduler,
+        train_config.gradient_accumulation_steps,
+        train_config,
+        None,
+        None,
+        None,
+        wandb_run=None,
+    )
 
-# ### Step 6:
-# Save model checkpoint
-model.save_pretrained(train_config.output_dir)
+    # ### Step 6:
+    # Save model checkpoint
+    model.save_pretrained(train_config.output_dir)
+    return model
 
-
+model = peft_train(model, train_config, train_dataloader, eval_dataloader, tokenizer)
 # ### Step 7:
 # Try the fine tuned model on the same example again to see the learning progress:
 
