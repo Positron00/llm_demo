@@ -29,6 +29,17 @@ from llama_recipes.configs import train_config as TRAIN_CONFIG
 class TrainingConfig:
     def __init__(self):
         self.model_name = "meta-llama/Meta-Llama-3.1-8B"
+        self.num_epochs = 1
+        self.run_validation = False
+        self.gradient_accumulation_steps = 4
+        self.batch_size_training = 1
+        self.lr = 3e-4
+        self.use_fast_kernels = True
+        self.use_fp16 = True
+        self.context_length = 1024 if torch.cuda.get_device_properties(0).total_memory < 16e9 else 2048 # T4 16GB or A10 24GB
+        self.batching_strategy = "packing"
+        self.output_dir = "meta-llama-samsum"
+        self.use_peft = True
 
 
 # make a class for PEFT
@@ -39,19 +50,7 @@ class PEFTConfig:
         self.lora_dropout = 0.01
         
 
-        
-train_config.model_name = "meta-llama/Meta-Llama-3.1-8B"
-train_config.num_epochs = 1
-train_config.run_validation = False
-train_config.gradient_accumulation_steps = 4
-train_config.batch_size_training = 1
-train_config.lr = 3e-4
-train_config.use_fast_kernels = True
-train_config.use_fp16 = True
-train_config.context_length = 1024 if torch.cuda.get_device_properties(0).total_memory < 16e9 else 2048 # T4 16GB or A10 24GB
-train_config.batching_strategy = "packing"
-train_config.output_dir = "meta-llama-samsum"
-train_config.use_peft = True
+train_config = TrainingConfig()
 
 from transformers import BitsAndBytesConfig
 config = BitsAndBytesConfig(
