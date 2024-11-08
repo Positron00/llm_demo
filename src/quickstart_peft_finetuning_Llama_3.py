@@ -82,8 +82,38 @@ def peft_train(model, train_config, train_dataloader, eval_dataloader, tokenizer
     model.save_pretrained(train_config.output_dir)
     return model
 
+eval_prompt = """
+    Summarize this dialog:
+    A: Hi Tom, are you busy tomorrow’s afternoon?
+    B: I’m pretty sure I am. What’s up?
+    A: Can you go with me to the animal shelter?.
+    B: What do you want to do?
+    A: I want to get a puppy for my son.
+    B: That will make him so happy.
+    A: Yeah, we’ve discussed it many times. I think he’s ready now.
+    B: That’s good. Raising a dog is a tough issue. Like having a baby ;-) 
+    A: I'll get him one of those little dogs.
+    B: One that won't grow up too big;-)
+    A: And eat too much;-))
+    B: Do you know which one he would like?
+    A: Oh, yes, I took him there last Monday. He showed me one that he really liked.
+    B: I bet you had to drag him away.
+    A: He wanted to take it home right away ;-).
+    B: I wonder what he'll name it.
+    A: He said he’d name it after his dead hamster – Lemmy  - he's  a great Motorhead fan :-)))
+    ---
+    Summary:
+    """
 
-def run_peft():
+def eval_model(model, eval_prompt, tokenizer):
+    model_input = tokenizer(eval_prompt, return_tensors="pt").to("cuda")
+
+    # Evaluate the fine-tuned model:
+    model.eval()
+    with torch.inference_mode():
+        print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
+
+def run_peft(samsum_dataset,get_peft_model, prepare_model_for_kbit_training, LoraConfig):
     # Setup training configuration and load the model and tokenizer.
     train_config = TrainingConfig()
     config = BitsAndBytesConfig(load_in_8bit=True)
@@ -114,32 +144,8 @@ def run_peft():
 
     model = peft_train(model, train_config, train_dataloader, eval_dataloader, tokenizer)
 
-    eval_prompt = """
-    Summarize this dialog:
-    A: Hi Tom, are you busy tomorrow’s afternoon?
-    B: I’m pretty sure I am. What’s up?
-    A: Can you go with me to the animal shelter?.
-    B: What do you want to do?
-    A: I want to get a puppy for my son.
-    B: That will make him so happy.
-    A: Yeah, we’ve discussed it many times. I think he’s ready now.
-    B: That’s good. Raising a dog is a tough issue. Like having a baby ;-) 
-    A: I'll get him one of those little dogs.
-    B: One that won't grow up too big;-)
-    A: And eat too much;-))
-    B: Do you know which one he would like?
-    A: Oh, yes, I took him there last Monday. He showed me one that he really liked.
-    B: I bet you had to drag him away.
-    A: He wanted to take it home right away ;-).
-    B: I wonder what he'll name it.
-    A: He said he’d name it after his dead hamster – Lemmy  - he's  a great Motorhead fan :-)))
-    ---
-    Summary:
-    """
+    eval_model(model, eval_prompt, tokenizer)
 
-    model_input = tokenizer(eval_prompt, return_tensors="pt").to("cuda")
 
-    # Evaluate the fine-tuned model:
-    model.eval()
-    with torch.inference_mode():
-        print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
+if __name__ == "__main__":
+    run_peft(samsum_dataset,get_peft_model, prepare_model_for_kbit_training, LoraConfig)
