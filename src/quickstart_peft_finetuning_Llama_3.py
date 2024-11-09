@@ -115,7 +115,7 @@ def eval_model(model, eval_prompt, tokenizer):
     with torch.inference_mode():
         print(tokenizer.decode(model.generate(**model_input, max_new_tokens=100)[0], skip_special_tokens=True))
 
-def run_peft(samsum_dataset,get_peft_model, prepare_model_for_kbit_training, LoraConfig):
+def run_peft():
     # Setup training configuration and load the model and tokenizer.
     train_config = TrainingConfig()
     config = BitsAndBytesConfig(load_in_8bit=True)
@@ -150,4 +150,4 @@ def run_peft(samsum_dataset,get_peft_model, prepare_model_for_kbit_training, Lor
 
 
 if __name__ == "__main__":
-    run_peft(samsum_dataset,get_peft_model, prepare_model_for_kbit_training, LoraConfig)
+    run_peft()
