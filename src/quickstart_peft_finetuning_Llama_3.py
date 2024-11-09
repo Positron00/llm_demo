@@ -46,7 +46,7 @@ class TrainingConfig(TRAIN_CONFIG):
         self.use_peft = True
 
 # make a class for PEFT
-class lora_CONFIG(LORA_CONFIG):
+class LoraConfigWrapper(LORA_CONFIG):
     def __init__(self):
         super().__init__() 
         self.r = 8
@@ -138,7 +138,7 @@ def run_peft():
     eval_dataloader = get_dataloader(tokenizer, samsum_dataset, train_config, "val")
 
     # prepare the model for Parameter Efficient Fine Tuning (PEFT):
-    lora_config = lora_CONFIG()
+    lora_config = LoraConfigWrapper()
     peft_config = LoraConfig(**asdict(lora_config))
 
     model = prepare_model_for_kbit_training(model)
