@@ -9,6 +9,7 @@
 
 # ! pip install llama-recipes ipywidgets
 
+import logging
 import huggingface_hub
 huggingface_hub.login()
 
@@ -143,6 +144,13 @@ def run_peft():
 
     model = prepare_model_for_kbit_training(model)
     model = get_peft_model(model, peft_config)
+
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Use logger instead of print
+    logger.info("Starting training process...")
 
     model = peft_train(model, train_config, train_dataloader, eval_dataloader, tokenizer)
 
