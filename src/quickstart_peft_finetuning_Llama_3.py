@@ -31,6 +31,7 @@ from dataclasses import asdict
 # make a class for the training configuration
 class TrainingConfig(TRAIN_CONFIG):
     def __init__(self):
+        super().__init__() 
         self.model_name = "meta-llama/Meta-Llama-3.1-8B"
         self.num_epochs = 1
         self.run_validation = False
@@ -47,6 +48,7 @@ class TrainingConfig(TRAIN_CONFIG):
 # make a class for PEFT
 class lora_CONFIG(LORA_CONFIG):
     def __init__(self):
+        super().__init__() 
         self.r = 8
         self.lora_alpha = 32
         self.lora_dropout = 0.01
