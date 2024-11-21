@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# Modified from: https://github.com/huggingface/llama-recipes/blob/main/quickstart_peft_finetuning_Llama_3.ipynb
 # Train a Meta Llama 3 model on a single GPU (e.g. A10 with 24GB) using int8 quantization and LoRA finetuning.
 # 
 # **_Note:_** To run this code on a machine with less than 24GB VRAM (e.g. T4 with 16GB) the context length of the training dataset 
