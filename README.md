@@ -1,1 +1,1 @@
-This is a sandbox repo for testing open source large language models (llm) using in-context-learning, retrieval augmented generation, and fine-tuning.
+This is a sandbox repo for testing open source large language models (llm) using in-context-learning, retrieval augmented generation, and fine-tuning. Some of the sources include example code from Meta's Llama-recipes (https://github.com/meta-llama/llama-recipes).
