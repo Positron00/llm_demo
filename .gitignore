@@ -2,3 +2,5 @@
 data/*.csv
 *.pyc
 *.png
+*.jpeg
+*.jpg
